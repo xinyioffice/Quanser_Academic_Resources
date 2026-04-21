@@ -1,6 +1,75 @@
 @echo off
 setlocal EnableDelayedExpansion
 
+:: ============================================================
+:: Detect real Documents folder path from registry
+:: (handles cases where user has relocated Documents to another drive)
+:: ============================================================
+set "DOCUMENTS_DIR="
+for /f "tokens=2*" %%a in ('reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders" /v Personal 2^>nul') do set "DOCUMENTS_DIR=%%b"
+
+:: Expand any embedded environment variables (e.g. %USERPROFILE%) in DOCUMENTS_DIR
+for /f "delims=" %%a in ('echo %DOCUMENTS_DIR%') do set "DOCUMENTS_DIR=%%a"
+
+:: Fallback to default if registry query failed or returned empty
+if not defined DOCUMENTS_DIR (
+    set "DOCUMENTS_DIR=%USERPROFILE%\Documents"
+    echo WARNING: Could not detect Documents folder from registry, falling back to %USERPROFILE%\Documents
+)
+
+echo Detected Documents folder: %DOCUMENTS_DIR%
+
+:: ============================================================
+:: Detect non-ASCII characters in Documents path
+:: If path contains Chinese/Japanese/Korean etc., rt_models
+:: will be copied to %PROGRAMDATA% to avoid quarc_run failures
+:: ============================================================
+set "HAS_NON_ASCII=False"
+for /f "delims=" %%a in ('powershell -NoProfile -Command "$p = '%DOCUMENTS_DIR%'; if ($p -match '[^\x00-\x7F]') { 'True' } else { 'False' }"') do set "HAS_NON_ASCII=%%a"
+
+if "%HAS_NON_ASCII%"=="True" (
+    echo WARNING: Documents path contains non-ASCII characters, rt_models will be relocated to ProgramData
+    set "RTMODELS_DIR=%PROGRAMDATA%\Quanser\rt_models"
+) else (
+    set "RTMODELS_DIR=%DOCUMENTS_DIR%\Quanser\0_libraries\resources\rt_models"
+)
+
+echo rt_models path: %RTMODELS_DIR%
+echo.
+
+:: ============================================================
+:: If path has non-ASCII chars, copy rt_models to ProgramData
+:: so quarc_run can find them at a pure ASCII path
+:: ============================================================
+if "%HAS_NON_ASCII%"=="True" (
+    echo Non-ASCII path detected. Copying rt_models to !RTMODELS_DIR!...
+
+    :: Verify source directory exists before copying
+    set "RTMODELS_SRC=%DOCUMENTS_DIR%\Quanser\0_libraries\resources\rt_models"
+    if not exist "!RTMODELS_SRC!\*" (
+        echo ERROR: Source rt_models directory not found at: !RTMODELS_SRC!
+        echo Please make sure Quanser SDK is installed and rt_models exist.
+        pause
+        exit /b 1
+    )
+
+    :: xcopy with /I will auto-create destination dir, no need for separate mkdir
+
+    :: Copy rt_models from original location to ProgramData
+    :: /E = all subdirs including empty, /I = assume destination is a dir
+    :: /Y = overwrite without prompt, /Q = quiet mode
+    xcopy "!RTMODELS_SRC!\*" "!RTMODELS_DIR!\" /E /I /Y /Q
+
+    if !errorlevel! neq 0 (
+        echo Failed to copy rt_models. Please check permissions.
+        pause
+        exit /b 1
+    )
+
+    echo rt_models copied successfully.
+    echo.
+)
+
 :: Specify the path to the log file
 set "LOG_FILE=%CD%\software_requirements.log"
 
@@ -25,7 +94,7 @@ set "QLabs_status="
 for /f "tokens=1,* delims=:" %%a in ('type "%LOG_FILE%" ^| findstr /r "QSDK_user: QLabs_user: Python_user:"') do (
     set "key=%%a"
     set "value=%%b"
-    
+
     :: Trim leading spaces from value
     set "value=!value:~1!"
     call :TrimSpaces value
@@ -49,28 +118,28 @@ echo.
 
 if "%Python_version%"=="Not Installed" (
     set "missing_requirements=!missing_requirements! Python,"
-    echo Python is Required and Missing 
+    echo Python is Required and Missing
     echo No Python installation found on your system. Please install a suitable Python version [3.11-3.14]
-    echo and add to path before running this script. 
-    echo For download links, ctrl + click: [94mhttps://www.quanser.com/pcsetup[0m 
+    echo and add to path before running this script.
+    echo For download links, ctrl + click: [94mhttps://www.quanser.com/pcsetup[0m
     echo.
     timeout /t 1 >nul
 )
 
-:: QSDK/QUARC VERSION CHECK 
+:: QSDK/QUARC VERSION CHECK
 if "%QSDK_status%"=="Not Installed" (
     set "missing_requirements=!missing_requirements! QUARC or Quanser SDK"
-    echo QUARC or Quanser SDK is Required and Missing 
+    echo QUARC or Quanser SDK is Required and Missing
     echo They are needed to use Quanser's devices with Python.
-    echo For more information, ctrl + click: [94mhttps://www.quanser.com/pcsetup[0m 
+    echo For more information, ctrl + click: [94mhttps://www.quanser.com/pcsetup[0m
     echo or contact Quanser tech support at tech@quanser.com
     echo.
     timeout /t 1 >nul
 )
 
 if "%QLabs_status%"=="Not Installed" (
-    echo Quanser Interactive Labs is not installed, if you are going to use virtual devices, 
-    echo download it as described in our resources, ctrl + click: [94mhttps://www.quanser.com/pcsetup[0m 
+    echo Quanser Interactive Labs is not installed, if you are going to use virtual devices,
+    echo download it as described in our resources, ctrl + click: [94mhttps://www.quanser.com/pcsetup[0m
     echo.
     timeout /t 1 >nul
 )
@@ -95,7 +164,7 @@ set "py_ver=!Python_version!"
 
 :: Installing python whls
 ::Search for the file that starts with "quanser_api"
-for /f "delims=" %%f in ('dir /b /a-d "%QSDK_DIR%python"\quanser_api*') do (
+for /f "delims=" %%f in ('dir /b /a-d "%QSDK_DIR%python"\\quanser_api*') do (
     set FILENAME=%%f
 )
 
@@ -104,7 +173,7 @@ py -!py_ver! -m pip cache purge
 
 echo [93mInstalling Quanser Python API %FILENAME%[0m
 py -!py_ver! -m pip install --upgrade pip
-py -!py_ver! -m pip install --upgrade --find-links "%QSDK_DIR%python" "%QSDK_DIR%python\%FILENAME%"
+py -!py_ver! -m pip install --upgrade --find-links "%QSDK_DIR%python" "%QSDK_DIR%python\\%FILENAME%"
 
 timeout /t 2 >nul
 
@@ -114,11 +183,11 @@ echo.
 :: SETTING UP ENVIRONMENT VARIABLES
 
 echo [92mSetting up Environment Variables...[0m
-:: Define paths
-set "QAL_DIR=%USERPROFILE%\Documents\Quanser"
-set "RTMODELS_DIR=%USERPROFILE%\Documents\Quanser\0_libraries\resources\rt_models"
-set "NEW_PYTHON_PATH=%USERPROFILE%\Documents\Quanser\0_libraries\python"
+:: Define paths -- using detected DOCUMENTS_DIR instead of hardcoded USERPROFILE\Documents
+set "QAL_DIR=%DOCUMENTS_DIR%\Quanser"
+set "NEW_PYTHON_PATH=%DOCUMENTS_DIR%\Quanser\0_libraries\python"
 echo.
+
 :: Set QAL_DIR
 echo [93mSetting QAL_DIR to: %QAL_DIR%[0m
 setx QAL_DIR "%QAL_DIR%"
@@ -205,8 +274,8 @@ goto :eof
 :ending
 echo.
 echo [92mScript completed. System configured for Python usage.
-echo. 
-echo For MATLAB usage, also run configure_matlab.  
+echo.
+echo For MATLAB usage, also run configure_matlab.
 echo PLEASE RESTART YOUR MACHINE FOR CHANGES TO BE APPLIED.[0m
 endlocal
 pause
