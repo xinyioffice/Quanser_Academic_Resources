@@ -28,21 +28,10 @@ set "HAS_NON_ASCII=False"
 for /f "delims=" %%a in ('powershell -NoProfile -Command "$p = '%DOCUMENTS_DIR%'; if ($p -match '[^\x00-\x7F]') { 'True' } else { 'False' }"') do set "HAS_NON_ASCII=%%a"
 
 if "%HAS_NON_ASCII%"=="True" (
-    echo WARNING: Documents path contains non-ASCII characters, rt_models will be relocated to ProgramData
+    echo WARNING: Documents path contains non-ASCII characters
     set "RTMODELS_DIR=%PROGRAMDATA%\Quanser\rt_models"
-) else (
-    set "RTMODELS_DIR=%DOCUMENTS_DIR%\Quanser\0_libraries\resources\rt_models"
-)
-
-echo rt_models path: %RTMODELS_DIR%
-echo.
-
-:: ============================================================
-:: If path has non-ASCII chars, copy rt_models to ProgramData
-:: so quarc_run can find them at a pure ASCII path
-:: ============================================================
-if "%HAS_NON_ASCII%"=="True" (
-    echo Non-ASCII path detected. Copying rt_models to !RTMODELS_DIR!...
+    echo rt_models will be relocated to: !RTMODELS_DIR!
+    echo.
 
     :: Verify source directory exists before copying
     set "RTMODELS_SRC=%DOCUMENTS_DIR%\Quanser\0_libraries\resources\rt_models"
@@ -53,11 +42,8 @@ if "%HAS_NON_ASCII%"=="True" (
         exit /b 1
     )
 
-    :: xcopy with /I will auto-create destination dir, no need for separate mkdir
-
-    :: Copy rt_models from original location to ProgramData
-    :: /E = all subdirs including empty, /I = assume destination is a dir
-    :: /Y = overwrite without prompt, /Q = quiet mode
+    :: Copy rt_models to ProgramData (xcopy /I auto-creates destination dir)
+    echo Copying rt_models to !RTMODELS_DIR!...
     xcopy "!RTMODELS_SRC!\*" "!RTMODELS_DIR!\" /E /I /Y /Q
 
     if !errorlevel! neq 0 (
@@ -67,6 +53,10 @@ if "%HAS_NON_ASCII%"=="True" (
     )
 
     echo rt_models copied successfully.
+    echo.
+) else (
+    set "RTMODELS_DIR=%DOCUMENTS_DIR%\Quanser\0_libraries\resources\rt_models"
+    echo rt_models path: !RTMODELS_DIR!
     echo.
 )
 
