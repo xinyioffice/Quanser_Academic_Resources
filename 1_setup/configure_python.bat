@@ -162,8 +162,8 @@ echo [93mDeleting pip cache[0m
 py -!py_ver! -m pip cache purge
 
 echo [93mInstalling Quanser Python API %FILENAME%[0m
-py -!py_ver! -m pip install --upgrade pip
-py -!py_ver! -m pip install --upgrade --find-links "%QSDK_DIR%python" "%QSDK_DIR%python\\%FILENAME%"
+py -!py_ver! -m pip install -i https://mirrors.ustc.edu.cn/pypi/simple --upgrade pip
+py -!py_ver! -m pip install -i https://mirrors.ustc.edu.cn/pypi/simple --upgrade --find-links "%QSDK_DIR%python" "%QSDK_DIR%python\\%FILENAME%"
 
 timeout /t 2 >nul
 
@@ -233,7 +233,7 @@ if %errorlevel% neq 0 (
 )
 
 :: Install the required packages using pip
-py -!py_ver! -m pip install -r "%REQUIREMENTS_FILE%"
+py -!py_ver! -m pip install -i https://mirrors.ustc.edu.cn/pypi/simple -r "%REQUIREMENTS_FILE%"
 
 :: Check the result of the pip install command
 if %errorlevel% neq 0 (
