@@ -37,12 +37,11 @@ echo Requirements and System Diagnostics Log >> %LOGFILE%
 echo ================================ >> %LOGFILE%
 
 
-::  Check for QUARC by running the quarc_run console command
+::  Check for QUARC via the QUARC_DIR environment variable and its lib folder
 set "QUARC=%CROSS%"
-where quarc_run >nul 2>nul
-if %errorlevel% equ 0 (
-    set "QUARC=%CHECK%"
-) 
+if defined QUARC_DIR (
+    if exist "%QUARC_DIR%\lib" ( set "QUARC=%CHECK%" )
+)
 
 ::  Check for qsdk dir existing
 set "qsdk_dir=C:\Program Files\Quanser\Quanser SDK"
