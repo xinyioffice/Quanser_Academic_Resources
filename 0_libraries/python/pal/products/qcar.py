@@ -806,7 +806,7 @@ class QCarGPS:
 
     """
 
-    def __init__(self, initialPose=[0, 0, 0], calibrate=False, gpsPort = 18967, lidarIdealPort = 18968,education=True):
+    def __init__(self, initialPose=[0, 0, 0], calibrate=False, gpsPort = 18967, lidarIdealPort = 18968):
         """
         Initializes the QCarGPS class with the initial pose of the QCar.
 
@@ -818,8 +818,7 @@ class QCarGPS:
         self._need_calibrate = calibrate
         if IS_PHYSICAL_QCAR:
             self.__initLidarToGPS(initialPose)
-        
-        self.education = education
+
         self._timeout = Timeout(seconds=0, nanoseconds=1)
         # Setup GPS client and connect to GPS server
         self.position = np.zeros((3))
@@ -840,9 +839,6 @@ class QCarGPS:
                 print("Couldn't Connect to GPS Server")
                 return
             self._gps_client.checkConnection()
-            print("gps connected: ", self._gps_client.connected)
-            time.sleep(0.1)
-        
 
         # Setup Lidar data client and connect to Lidar data server
         self.scanTime = 0
@@ -861,12 +857,10 @@ class QCarGPS:
         t0 = time.time()
         if IS_PHYSICAL_QCAR or QCAR_CONFIG['cartype']==1:
             while not self._lidar_client.connected:
-                    if time.time()-t0 > 5:
-                        print("Couldn't Connect to Lidar Server")
-                        return
-                    self._lidar_client.checkConnection()
-                    print("lidar connected: ", self._lidar_client.connected)
-                    time.sleep(0.1)
+                if time.time()-t0 > 5:
+                    print("Couldn't Connect to Lidar Server")
+                    return
+                self._lidar_client.checkConnection()
         else:
             port = lidarIdealPort-2
             self.lidar = QCarLidar(lidarPort=port)
@@ -952,10 +946,7 @@ class QCarGPS:
             timeout=self._timeout)
 
         if recvFlag:
-            if self.education:
-                self.position = self._gps_client.receiveBuffer[0:3]/10
-            else:
-                self.position = self._gps_client.receiveBuffer[0:3]
+            self.position = self._gps_client.receiveBuffer[0:3]
             self.orientation = self._gps_client.receiveBuffer[3:6]
 
         return recvFlag
@@ -971,17 +962,8 @@ class QCarGPS:
             # print('use QCarLidar() class to use Lidar for virtual QCar2')
             recvFlag = self.lidar.read()
             self.angles = self.lidar.angles
-            if self.education:
-                self.distances = self.lidar.distances/10
-            else:                 
-                self.distances = self.lidar.distances
-            self.angles, self.distances = self.filter_rplidar_data(
-            self.angles,
-            self.distances
-            )
+            self.distances = self.lidar.distances
             return recvFlag
-
-        # Data specific for QCar 1
         recvFlag, bytesReceived = self._lidar_client.receive(
             iterations=1,
             timeout=self._timeout)
@@ -990,6 +972,11 @@ class QCarGPS:
             self.scanTime = self._lidar_client.receiveBuffer[0]
             self.distances = self._lidar_client.receiveBuffer[1:385]
             self.angles = self._lidar_client.receiveBuffer[385:769]
+
+            self.angles, self.distances = self.filter_rplidar_data(
+                self.angles,
+                self.distances
+            )
 
         return recvFlag
 
