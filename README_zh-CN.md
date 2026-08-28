@@ -24,7 +24,9 @@
 
 **注意：** 如果要设置 Raspberry Pi（4 或 5），以配合 Mechatronic Actuators Trainer 和/或 Mechatronic Sensors Trainer 使用，请跳过本指南，参阅 [Raspberry Pi 设置](1_setup/raspberry_pi/pi_setup.pdf)。这些设备既可以在 Windows 计算机上使用，也可以在 Raspberry Pi 上使用。
 
-开始使用这些资源前，第一步是将资源下载到计算机中。可以使用 Git，也可以直接将文件下载为 `.zip` 压缩包。建议将资源放在 `C:/Users/user/Documents/Quanser` 文件夹中。
+开始使用这些资源前，第一步是将资源下载到计算机中。可以使用 Git，也可以直接将文件下载为 `.zip` 压缩包。默认情况下，setup 脚本要求资源位于 `%USERPROFILE%\Documents\Quanser`（例如 `C:/Users/user/Documents/Quanser`）。
+
+如果 Windows 已将 Documents 文件夹重定向到其他位置，且该路径包含中文或其他非 ASCII 字符，`configure_python.bat` 会将完整的 `0_libraries` 目录复制到 `%PROGRAMDATA%\Quanser\0_libraries`，并将 Python 配置为使用该副本。
 
 ### 使用 Git
 

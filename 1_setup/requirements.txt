@@ -1,7 +1,7 @@
 numpy<2.4
 scipy
 pygit
-opencv-python
+opencv-python>=4,<5
 pytransform3d
 matplotlib
 PyQt6

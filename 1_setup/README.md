@@ -79,9 +79,11 @@ It checks that Python and QUARC or Quanser SDK are installed and warns if Quanse
 2. **Installs additional Python packages** -- runs `pip install -r requirements.txt` to install all other packages needed by the Quanser resources. The list of requirements is located in `requirements.txt` in this folder.
 
 3. **Sets persistent Windows environment variables** (via `setx`):
-    - `QAL_DIR` -- points to `%USERPROFILE%\Documents\Quanser`, the root of the Quanser resources folder.
-    - `RTMODELS_DIR` -- points to `%USERPROFILE%\Documents\Quanser\0_libraries\resources\rt_models`, used to locate real-time models.
-    - `PYTHONPATH` -- adds `%USERPROFILE%\Documents\Quanser\0_libraries\python` so the Quanser Python libraries are importable from any project without manual path setup. If `PYTHONPATH` already exists, the path is appended rather than replaced.
+    - `QAL_DIR` -- by default points to `%USERPROFILE%\Documents\Quanser`, the root of the Quanser resources folder.
+    - `RTMODELS_DIR` -- by default points to `%USERPROFILE%\Documents\Quanser\0_libraries\resources\rt_models`, used to locate real-time models.
+    - `PYTHONPATH` -- by default adds `%USERPROFILE%\Documents\Quanser\0_libraries\python` so the Quanser Python libraries are importable from any project without manual path setup. If `PYTHONPATH` already exists, the path is appended rather than replaced.
+
+    The script uses the actual Documents folder detected by Windows. If that path contains non-ASCII characters, it copies the complete `0_libraries` directory to `%PROGRAMDATA%\Quanser\0_libraries` and points all three variables to that copy.
 
 A machine restart is required for the environment variable changes to take effect.
 

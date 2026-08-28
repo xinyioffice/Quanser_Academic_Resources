@@ -22,7 +22,9 @@ This repository includes content for the following products: `Aero 2, Mechatroni
 
 **Note:** If you are trying to set up a Raspberry Pi (4 or 5) to use with the Mechatronic Actuators Trainer and/or the Mechatronic Sensors Trainer, skip this guide and see [Raspberry Pi Setup](1_setup/raspberry_pi/pi_setup.pdf). These devices work both in Windows computers and Raspberry Pis.
 
-Before getting started with these resources, the first step is to download them into your computer. There is two ways to do this, using Git, or downloading the files simply as a .zip file. We recommend having our resources in a `C:/Users/user/Documents/Quanser` folder.
+Before getting started with these resources, the first step is to download them into your computer. There is two ways to do this, using Git, or downloading the files simply as a .zip file. By default, the setup scripts expect the resources in `%USERPROFILE%\Documents\Quanser` (for example, `C:/Users/user/Documents/Quanser`).
+
+If Windows has relocated your Documents folder and its path contains non-ASCII characters, `configure_python.bat` copies the complete `0_libraries` directory to `%PROGRAMDATA%\Quanser\0_libraries` and configures Python to use that copy.
 
 ### With Git
 

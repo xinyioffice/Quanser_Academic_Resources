@@ -21,41 +21,49 @@ echo Detected Documents folder: %DOCUMENTS_DIR%
 
 :: ============================================================
 :: Detect non-ASCII characters in Documents path
-:: If path contains Chinese/Japanese/Korean etc., rt_models
-:: will be copied to %PROGRAMDATA% to avoid quarc_run failures
+:: If path contains Chinese/Japanese/Korean etc., the complete
+:: 0_libraries directory will be copied to %PROGRAMDATA%
+:: to avoid path-related failures in Python and QUARC workflows
 :: ============================================================
 set "HAS_NON_ASCII=False"
 for /f "delims=" %%a in ('powershell -NoProfile -Command "$p = '%DOCUMENTS_DIR%'; if ($p -match '[^\x00-\x7F]') { 'True' } else { 'False' }"') do set "HAS_NON_ASCII=%%a"
 
+set "QUANSER_DIR=%DOCUMENTS_DIR%\Quanser"
+set "LIBRARIES_SRC=!QUANSER_DIR!\0_libraries"
+set "QAL_DIR=!QUANSER_DIR!"
+set "LIBRARIES_DIR=!LIBRARIES_SRC!"
+set "RTMODELS_DIR=!LIBRARIES_DIR!\resources\rt_models"
+
 if "%HAS_NON_ASCII%"=="True" (
     echo WARNING: Documents path contains non-ASCII characters
-    set "RTMODELS_DIR=%PROGRAMDATA%\Quanser\rt_models"
-    echo rt_models will be relocated to: !RTMODELS_DIR!
+    set "QAL_DIR=%PROGRAMDATA%\Quanser"
+    set "LIBRARIES_DIR=!QAL_DIR!\0_libraries"
+    set "RTMODELS_DIR=!LIBRARIES_DIR!\resources\rt_models"
+    echo 0_libraries will be copied to: !LIBRARIES_DIR!
     echo.
 
     :: Verify source directory exists before copying
-    set "RTMODELS_SRC=%DOCUMENTS_DIR%\Quanser\0_libraries\resources\rt_models"
-    if not exist "!RTMODELS_SRC!\*" (
-        echo ERROR: Source rt_models directory not found at: !RTMODELS_SRC!
-        echo Please make sure Quanser SDK is installed and rt_models exist.
+    if not exist "!LIBRARIES_SRC!\*" (
+        echo ERROR: Source 0_libraries directory not found at: !LIBRARIES_SRC!
+        echo Please make sure the Quanser resources folder is installed correctly.
         pause
         exit /b 1
     )
 
-    :: Copy rt_models to ProgramData (xcopy /I auto-creates destination dir)
-    echo Copying rt_models to !RTMODELS_DIR!...
-    xcopy "!RTMODELS_SRC!\*" "!RTMODELS_DIR!\" /E /I /Y /Q
+    :: Copy the complete 0_libraries tree to ProgramData
+    echo Copying 0_libraries to !LIBRARIES_DIR!...
+    xcopy "!LIBRARIES_SRC!\*" "!LIBRARIES_DIR!\" /E /I /Y /Q
 
     if !errorlevel! neq 0 (
-        echo Failed to copy rt_models. Please check permissions.
+        echo Failed to copy 0_libraries. Please check permissions.
         pause
         exit /b 1
     )
 
-    echo rt_models copied successfully.
+    echo 0_libraries copied successfully.
     echo.
 ) else (
-    set "RTMODELS_DIR=%DOCUMENTS_DIR%\Quanser\0_libraries\resources\rt_models"
+    echo 0_libraries path: !LIBRARIES_DIR!
     echo rt_models path: !RTMODELS_DIR!
     echo.
 )
@@ -173,9 +181,8 @@ echo.
 :: SETTING UP ENVIRONMENT VARIABLES
 
 echo [92mSetting up Environment Variables...[0m
-:: Define paths -- using detected DOCUMENTS_DIR instead of hardcoded USERPROFILE\Documents
-set "QAL_DIR=%DOCUMENTS_DIR%\Quanser"
-set "NEW_PYTHON_PATH=%DOCUMENTS_DIR%\Quanser\0_libraries\python"
+:: Define paths using the selected Quanser resource root
+set "NEW_PYTHON_PATH=!LIBRARIES_DIR!\python"
 echo.
 
 :: Set QAL_DIR
