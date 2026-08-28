@@ -1,0 +1,21 @@
+# Local AI agent and coding-assistant state
+.agents/
+.codex/
+.claude/
+.cursor/
+.windsurf/
+
+# Local development environments and Python caches
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Generated MATLAB/Simulink build artifacts
+slprj/
+*.slxc
+
+# Local setup output
+1_setup/software_requirements.log
