@@ -19,3 +19,10 @@ slprj/
 
 # Local setup output
 1_setup/software_requirements.log
+
+# Runtime-generated Quanser files and downloaded model binaries
+0_libraries/python/pal/products/qcar_config.json
+0_libraries/resources/pretrained_models/*.engine
+0_libraries/resources/pretrained_models/*.onnx
+0_libraries/resources/pretrained_models/*.pt
+0_libraries/resources/rt_models/MultiAgent/
